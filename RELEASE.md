@@ -6,7 +6,7 @@ This project is technically prepared for a first public release, but publisher i
 
 1. Create the public GitHub repository and choose its final URL.
 2. Choose and verify a Maven Central namespace. A `io.github.<github-user>` group is normally tied to that GitHub identity.
-3. Add the maintainer name and project URL/SCM coordinates to `pom.xml`.
+3. Confirm the maintainer identity in `pom.xml`; project URL/SCM coordinates already point to the configured GitHub origin.
 4. Create a Central Portal account/token and a public GPG signing key.
 5. Change `0.1.0-SNAPSHOT` to `0.1.0` only after the release bundle passes validation.
 

@@ -8,8 +8,23 @@
   <packaging>maven-plugin</packaging>
   <name>Migration Impact Analyzer Maven Plugin</name>
   <description>Read-only pre-migration impact analysis for Maven applications.</description>
+  <url>https://github.com/Sandeep092001/migration-impact-analyzer</url>
+  <inceptionYear>2026</inceptionYear>
   <licenses><license><name>Apache License, Version 2.0</name><url>https://www.apache.org/licenses/LICENSE-2.0.txt</url><distribution>repo</distribution></license></licenses>
-  <properties><maven.compiler.release>17</maven.compiler.release><project.build.sourceEncoding>UTF-8</project.build.sourceEncoding></properties>
+  <scm>
+    <connection>scm:git:https://github.com/Sandeep092001/migration-impact-analyzer.git</connection>
+    <developerConnection>scm:git:ssh://git@github.com/Sandeep092001/migration-impact-analyzer.git</developerConnection>
+    <url>https://github.com/Sandeep092001/migration-impact-analyzer</url>
+    <tag>HEAD</tag>
+  </scm>
+  <issueManagement><system>GitHub Issues</system><url>https://github.com/Sandeep092001/migration-impact-analyzer/issues</url></issueManagement>
+  <prerequisites><maven>3.9.0</maven></prerequisites>
+  <properties>
+    <maven.compiler.release>17</maven.compiler.release>
+    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+    <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
+    <project.build.outputTimestamp>2026-09-26T00:00:00Z</project.build.outputTimestamp>
+  </properties>
   <dependencies>
     <dependency><groupId>org.apache.maven</groupId><artifactId>maven-plugin-api</artifactId><version>3.9.9</version><scope>provided</scope></dependency>
     <dependency><groupId>org.apache.maven</groupId><artifactId>maven-core</artifactId><version>3.9.9</version><scope>provided</scope></dependency>
