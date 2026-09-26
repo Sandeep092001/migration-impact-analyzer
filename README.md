@@ -6,7 +6,7 @@ A read-only Maven plugin that maps a Spring Boot migration's likely blast radius
 mvn install
 
 # In the Maven project you want to inspect:
-mvn io.github.migration-impact:migration-impact-maven-plugin:0.1.0-SNAPSHOT:analyze \
+mvn io.github.sandeep092001:migration-impact-maven-plugin:0.1.0:analyze \
   -Dsource=spring-boot:2.7 -Dtarget=spring-boot:3.5 -DreportFormat=all
 ```
 

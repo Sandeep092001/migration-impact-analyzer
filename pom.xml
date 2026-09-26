@@ -2,7 +2,7 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
-  <groupId>io.github.sandeep28102000</groupId>
+  <groupId>io.github.sandeep092001</groupId>
   <artifactId>migration-impact-maven-plugin</artifactId>
   <version>0.1.0</version>
   <packaging>maven-plugin</packaging>
@@ -11,6 +11,15 @@
   <url>https://github.com/Sandeep092001/migration-impact-analyzer</url>
   <inceptionYear>2026</inceptionYear>
   <licenses><license><name>Apache License, Version 2.0</name><url>https://www.apache.org/licenses/LICENSE-2.0.txt</url><distribution>repo</distribution></license></licenses>
+  <developers>
+    <developer>
+      <id>Sandeep092001</id>
+      <name>Sandeep Singh</name>
+      <email>sandeep28102001@gmail.com</email>
+      <url>https://github.com/Sandeep092001</url>
+      <roles><role>Founder</role><role>Maintainer</role></roles>
+    </developer>
+  </developers>
   <scm>
     <connection>scm:git:https://github.com/Sandeep092001/migration-impact-analyzer.git</connection>
     <developerConnection>scm:git:ssh://git@github.com/Sandeep092001/migration-impact-analyzer.git</developerConnection>

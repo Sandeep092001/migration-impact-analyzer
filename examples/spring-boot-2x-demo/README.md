@@ -11,7 +11,7 @@ mvn install
 Then run this from this directory:
 
 ```bash
-mvn io.github.migration-impact:migration-impact-maven-plugin:0.1.0-SNAPSHOT:analyze \
+mvn io.github.sandeep092001:migration-impact-maven-plugin:0.1.0:analyze \
   -Dsource=spring-boot:2.7 -Dtarget=spring-boot:3.5 -DreportFormat=all
 ```
 
