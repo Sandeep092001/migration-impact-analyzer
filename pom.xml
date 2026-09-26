@@ -4,7 +4,7 @@
   <modelVersion>4.0.0</modelVersion>
   <groupId>io.github.sandeep092001</groupId>
   <artifactId>migration-impact-maven-plugin</artifactId>
-  <version>0.1.0</version>
+  <version>0.1.1-SNAPSHOT</version>
   <packaging>maven-plugin</packaging>
   <name>Migration Impact Analyzer Maven Plugin</name>
   <description>Read-only pre-migration impact analysis for Maven applications.</description>
