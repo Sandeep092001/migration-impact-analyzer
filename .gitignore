@@ -1,0 +1,14 @@
+# Maven build output
+target/
+**/target/
+
+# IDE and operating-system files
+.idea/
+.vscode/
+*.iml
+.DS_Store
+
+# Release secrets must never be committed
+*.asc
+*.gpg
+settings.xml
