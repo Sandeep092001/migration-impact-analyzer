@@ -1,6 +1,6 @@
 # Release guide
 
-Version 0.1.1 is prepared on the development branch, not published yet. Java 17+ and Maven 3.9+ are required. Coverage is curated, not universal; this release is not a security or application-compatibility certification.
+Version 0.1.1 is prepared on the Main branch and published. Java 17+ and Maven 3.9+ are required. Coverage is curated, not universal; this release is not a security or application-compatibility certification.
 
 ## Required decisions
 
