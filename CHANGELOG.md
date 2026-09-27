@@ -2,7 +2,9 @@
 
 This file records user-visible changes while a release is being developed. Items under **Unreleased** will become the release notes when that version is finalized.
 
-## 0.1.1 — Prepared for release 
+## 0.1.1 — 2026-09-27
+
+Published to Maven Central. Third-party knowledge is curated and incomplete; uncovered libraries remain explicit manual-review items and will be addressed in later knowledge updates.
 
 ### Reporting
 

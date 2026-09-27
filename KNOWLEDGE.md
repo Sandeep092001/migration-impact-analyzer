@@ -1,6 +1,6 @@
 # Knowledge coverage and contribution policy
 
-The analyzer intentionally separates observable Maven facts from compatibility claims.
+The analyzer intentionally separates observable Maven facts from compatibility claims. The catalog is useful but incomplete: it does not cover every library that can appear in a Spring Boot application, and no release should claim otherwise without a measured corpus.
 
 ## Coverage levels
 
@@ -9,13 +9,15 @@ The analyzer intentionally separates observable Maven facts from compatibility c
 - **Verified Java-library rule:** A framework-independent library is evaluated using its official Java baseline, module-alignment/runtime contract, and any documented interaction with target-platform changes such as Jackson 3.
 - **Unknown:** The library is not managed by the target BOM and has no verified bundled rule. The report asks for review and never claims compatibility.
 
-Verified third-party families currently include Springdoc, MyBatis Spring Boot Starter, Spring Cloud AWS, MyBatis-Plus, JJWT, the Resend Java SDK, and Apache PDFBox. Spring Cloud train mappings and Spring Boot/Java/framework facts are also bundled.
+Reviewed third-party families currently include Springdoc, MyBatis Spring Boot Starter, Spring Cloud AWS, MyBatis-Plus, JJWT, the Resend Java SDK, Apache PDFBox, Apache Commons Lang/Text/CSV/IO/Codec/Compress, jsoup, and MapStruct. Some rules establish Spring Boot integration compatibility; framework-independent rules establish only documented Java baselines, module alignment, and reviewed release boundaries. Spring Cloud train mappings and Spring Boot/Java/framework facts are also bundled.
 
 ## Coverage target
 
 “80–90% coverage” means that 80–90% of direct dependency occurrences in a documented, representative Spring Boot application corpus receive either exact target-BOM analysis or an evidence-backed family rule. It does not mean that the project claims knowledge of 80–90% of every artifact in Maven Central.
 
 Coverage must be measured by a reproducible fixture/corpus report before a percentage is advertised. Transitive artifacts managed automatically by the target BOM do not each require handwritten rules. Priority is given to direct libraries that repeatedly appear as `UNKNOWN`, especially framework integrations, security/authentication, persistence, messaging, cloud SDKs, HTTP clients, serialization, testing, reporting, and document processing.
+
+Each future plugin release may add or correct bundled knowledge. Until separately versioned knowledge packages are implemented, users receive those updates by upgrading the plugin. Missing knowledge is expected to remain visible in reports so the next catalog additions can be prioritized from real projects.
 
 ## Adding knowledge
 
