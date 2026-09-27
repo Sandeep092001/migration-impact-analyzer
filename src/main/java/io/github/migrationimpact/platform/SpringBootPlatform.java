@@ -4,7 +4,6 @@ import io.github.migrationimpact.model.ImpactReport;
 import io.github.migrationimpact.bom.TargetBom;
 import io.github.migrationimpact.model.ImpactReport.*;
 import org.apache.maven.artifact.Artifact;
-import org.apache.maven.model.Plugin;
 import org.apache.maven.project.MavenProject;
 import java.nio.file.*;
 import java.io.IOException;
@@ -24,7 +23,7 @@ public final class SpringBootPlatform implements MigrationPlatform {
     TargetKnowledge knowledge=knowledge(r.target);
     r.knowledgeVersion=knowledge.version();
     if(knowledgeDirectory!=null) r.knowledgeSource=knowledgeDirectory.toAbsolutePath().normalize().toString();
-    javaPrerequisite(p, r, knowledge); cloud(p, r, knowledge); dependencies(p, r, knowledge, targetBom, dependencyPaths); build(p, r, knowledge); sourceImports(base, r); order(r);
+    javaPrerequisite(p, r, knowledge); cloud(p, r, knowledge); dependencies(p, r, knowledge, targetBom, dependencyPaths); sourceImports(base, r); order(r);
   }
   private TargetKnowledge knowledge(String version) { return TargetKnowledge.load(knowledgeDirectory, version); }
   private void javaPrerequisite(MavenProject p, ImpactReport r, TargetKnowledge knowledge) {
@@ -48,19 +47,34 @@ public final class SpringBootPlatform implements MigrationPlatform {
   private void dependencies(MavenProject p, ImpactReport r, TargetKnowledge knowledge, TargetBom targetBom, Map<String,String> dependencyPaths) {
     Set<String> direct = p.getDependencies().stream().map(d -> d.getGroupId()+":"+d.getArtifactId()).collect(Collectors.toSet());
     List<LibraryKnowledge.Rule> libraryRules=LibraryKnowledge.load(knowledgeDirectory);
-    Set<String> seenRules=new HashSet<>(), ruleMatched=new HashSet<>();
+    List<Artifact> resolved=artifacts(p).sorted(Comparator.comparing(a -> a.getGroupId()+":"+a.getArtifactId())).toList();
+    Set<String> ruleMatched=new HashSet<>();
+    for(LibraryKnowledge.Rule rule:libraryRules) {
+      List<Artifact> matches=resolved.stream().filter(a -> direct.contains(a.getGroupId()+":"+a.getArtifactId()) && rule.matches(a.getGroupId(),a.getArtifactId(),a.getVersion(),knowledge.line())).toList();
+      if(matches.isEmpty()) continue;
+      matches.forEach(a -> ruleMatched.add(a.getGroupId()+":"+a.getArtifactId()));
+      String subject=rule.displayName()==null?matches.get(0).getGroupId()+":"+matches.get(0).getArtifactId():rule.displayName();
+      String versions=matches.stream().map(Artifact::getVersion).distinct().collect(Collectors.joining(", "));
+      String current=matches.size()==1?versions:versions+" ("+matches.size()+" modules)";
+      String targetDisplay=rule.targetDisplay()==null?rule.targetArtifact()+":"+rule.targetVersion():rule.targetDisplay();
+      String recommendation=rule.recommendation()==null?"Adopt the documented target artifact/version line and validate its latest stable patch.":rule.recommendation();
+      boolean misaligned=rule.alignVersions() && matches.stream().map(Artifact::getVersion).distinct().count()>1;
+      List<String> wrongScopes=matches.stream().filter(a -> rule.runtimeArtifacts().contains(a.getArtifactId()) && !"runtime".equals(a.getScope())).map(a -> a.getArtifactId()+"="+a.getScope()).toList();
+      Status status=misaligned?Status.UPGRADE_REQUIRED:!wrongScopes.isEmpty()?Status.UPGRADE_RECOMMENDED:rule.status();
+      if(misaligned) recommendation="Align every "+subject+" artifact to one version. "+recommendation;
+      if(!wrongScopes.isEmpty()) recommendation="Use runtime scope for "+String.join(", ",wrongScopes)+". "+recommendation;
+      String javaEvidence=rule.javaMinimum()>0?" The library baseline is Java "+rule.javaMinimum()+"+; Spring Boot "+knowledge.line()+" requires Java "+knowledge.javaMinimum()+"+.":"";
+      List<Evidence> evidence=new ArrayList<>(); for(int i=0;i<rule.evidence().size();i++) evidence.add(docs(rule.id()+(i==0?"":"_"+(i+1)),rule.evidence().get(i),"Official library compatibility documentation"));
+      add(r,"LIBRARY_COMPATIBILITY",subject,current,targetDisplay,status,rule.risk(),rule.confidence(),recommendation,rule.reason()+javaEvidence,evidence);
+    }
     Set<String> oldSpringArtifacts=new TreeSet<>(), hibernateArtifacts=new TreeSet<>(), hibernateVersions=new TreeSet<>();
-    for (Artifact a:p.getArtifacts()) {
+    for (Artifact a:resolved) {
       String ga=a.getGroupId()+":"+a.getArtifactId(); boolean isDirect=direct.contains(ga);
       String targetManaged=targetBom == null ? null : targetBom.managedVersion(a.getGroupId(),a.getArtifactId());
       if (targetManaged != null && !targetManaged.equals(a.getVersion())) {
         if(isDirect) r.managedDirectChanges++; else r.managedTransitiveChanges++;
       }
       if (isDirect && targetManaged != null && !targetManaged.equals(a.getVersion()) && managedOverride(p,a)) add(r,"DEPENDENCY_MANAGEMENT",ga,a.getVersion(),targetManaged,Status.UPGRADE_RECOMMENDED,Risk.MEDIUM,Confidence.HIGH,"Remove or update the explicit version so the Spring Boot "+knowledge.line()+" BOM can manage this dependency.","The project explicitly overrides the version selected by the resolved target BOM.",bomEvidence(targetBom));
-      if(isDirect) libraryRules.stream().filter(rule -> rule.matches(a.getGroupId(),a.getArtifactId(),a.getVersion(),knowledge.line())).findFirst().ifPresent(rule -> {
-        ruleMatched.add(ga);
-        if(seenRules.add(rule.id())) add(r,"LIBRARY_COMPATIBILITY",ga,a.getVersion(),rule.targetArtifact()+":"+rule.targetVersion(),rule.status(),Risk.HIGH,Confidence.HIGH,"Adopt the documented target artifact/version line and validate its latest stable patch.",rule.reason(),docs(rule.id(),rule.evidence(),"Official library compatibility documentation"));
-      });
       if (knowledge.framework()!=null && !knowledge.framework().startsWith("5.") && a.getGroupId().equals("org.springframework") && a.getArtifactId().startsWith("spring-") && a.getVersion().startsWith("5.")) oldSpringArtifacts.add(ga+":"+a.getVersion());
       if (a.getGroupId().equals("org.hibernate.orm") || a.getGroupId().equals("org.hibernate")) { hibernateArtifacts.add(ga); hibernateVersions.add(a.getVersion()); }
       if(isDirect && targetManaged==null && !ruleMatched.contains(ga) && !a.getGroupId().startsWith("org.springframework")) add(r,"UNMANAGED_DEPENDENCY",ga,a.getVersion(),"not managed by target BOM",Status.UNKNOWN,Risk.MEDIUM,Confidence.UNKNOWN,"Check the library's official compatibility documentation for Spring Boot "+knowledge.line()+".","This direct third-party dependency is neither managed by the target Boot BOM nor covered by a verified bundled rule.",new Evidence("DEPENDENCY_GRAPH","UNMANAGED_DEPENDENCY",dependencyPaths.getOrDefault(ga,ga+":"+a.getVersion()),"Resolved Maven dependency graph"));
@@ -71,11 +85,6 @@ public final class SpringBootPlatform implements MigrationPlatform {
       String hibernateTarget=managedHibernate==null?"Hibernate "+knowledge.hibernateMajor():"org.hibernate.orm:hibernate-core:"+managedHibernate;
       Evidence hibernateEvidence=targetBom==null?docs("BOOT_"+knowledge.line()+"_HIBERNATE",knowledge.bootEvidence(),"Spring Boot managed dependency documentation"):bomEvidence(targetBom);
       add(r,"DEPENDENCY","Hibernate ORM",String.join(", ",hibernateVersions),hibernateTarget,Status.UPGRADE_RECOMMENDED,Risk.HIGH,Confidence.HIGH,"Review the target Hibernate migration notes and application mappings once.","The resolved target Spring Boot BOM manages a different Hibernate generation across "+hibernateArtifacts.size()+" detected Hibernate artifact(s).",hibernateEvidence);
-    }
-  }
-  private void build(MavenProject p, ImpactReport r, TargetKnowledge knowledge) {
-    for (Plugin plugin:p.getBuildPlugins()) if (plugin.getArtifactId().equals("maven-compiler-plugin")) {
-      add(r,"MAVEN_BUILD","maven-compiler-plugin",plugin.getVersion(),"Java "+knowledge.javaMinimum()+" compatible configuration",Status.UPGRADE_RECOMMENDED,Risk.MEDIUM,Confidence.MEDIUM,"Set release/source/target to "+knowledge.javaMinimum()+"+ and run the test suite.","Compiler settings must support the target JDK.",docs("BOOT_"+knowledge.line()+"_JAVA",knowledge.bootEvidence(),"Spring Boot system requirements"));
     }
   }
   private void sourceImports(Path base, ImpactReport r) {
@@ -92,4 +101,5 @@ public final class SpringBootPlatform implements MigrationPlatform {
   private static boolean matchesVersionLine(String version,String targetLine) { return version.startsWith(targetLine.replace(".x",".")); }
   private static Evidence bomEvidence(TargetBom targetBom) { String version=targetBom.resolvedVersion(); return new Evidence("BOM_METADATA","TARGET_BOM","https://repo1.maven.org/maven2/org/springframework/boot/spring-boot-dependencies/"+version+"/spring-boot-dependencies-"+version+".pom","Exact resolved Spring Boot BOM"); }
   private static void add(ImpactReport r,String c,String s,String cur,String target,Status st,Risk risk,Confidence conf,String rec,String why,Evidence e) { r.findings.add(new Finding(c,s,cur,target,st,risk,conf,rec,why,List.of(e))); }
+  private static void add(ImpactReport r,String c,String s,String cur,String target,Status st,Risk risk,Confidence conf,String rec,String why,List<Evidence> evidence) { r.findings.add(new Finding(c,s,cur,target,st,risk,conf,rec,why,List.copyOf(evidence))); }
 }

@@ -49,10 +49,7 @@ public final class ReportWriter {
           .append("   Target  : ").append(finding.target()).append('\n')
           .append("   Action  : ").append(finding.recommendation()).append('\n')
           .append("   Why     : ").append(finding.reason()).append('\n');
-      if(!finding.evidence().isEmpty()) {
-        var evidence=finding.evidence().get(0);
-        out.append("   Evidence: ").append(evidence.ruleId()).append(" — ").append(evidence.reference()).append('\n');
-      }
+      for(int e=0;e<finding.evidence().size();e++) { var evidence=finding.evidence().get(e); out.append(e==0?"   Evidence: ":"             ").append(evidence.ruleId()).append(" — ").append(evidence.reference()).append('\n'); }
     }
   }
 
@@ -101,9 +98,7 @@ public final class ReportWriter {
   private static String card(String label,int value) { return "<div class=\"card\"><div>"+h(label)+"</div><div class=\"value\">"+value+"</div></div>"; }
   private static String evidenceHtml(Finding finding) {
     if(finding.evidence().isEmpty()) return "None";
-    var evidence=finding.evidence().get(0); String reference=evidence.reference();
-    if(reference!=null && reference.startsWith("https://")) return "<a rel=\"noopener noreferrer\" href=\""+h(reference)+"\">"+h(evidence.ruleId())+"</a>";
-    return h(evidence.ruleId()+" — "+reference);
+    return finding.evidence().stream().map(evidence -> { String reference=evidence.reference(); if(reference!=null && reference.startsWith("https://")) return "<a rel=\"noopener noreferrer\" href=\""+h(reference)+"\">"+h(evidence.ruleId())+"</a>"; return h(evidence.ruleId()+" — "+reference); }).collect(Collectors.joining("<br>"));
   }
   private static String joinBom(ImpactReport report) { return report.targetBomVersion==null?null:report.targetBomCoordinates+":"+report.targetBomVersion; }
   private static String nullableJson(String value) { return value==null?"null":"\""+j(value)+"\""; }
