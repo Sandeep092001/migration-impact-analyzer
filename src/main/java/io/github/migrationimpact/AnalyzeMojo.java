@@ -39,7 +39,7 @@ public final class AnalyzeMojo extends AbstractMojo {
     MigrationPlatform platform=new SpringBootPlatform(knowledgeDirectory == null || knowledgeDirectory.isBlank() ? null : Path.of(knowledgeDirectory)); if(!platform.supports(source,target)) throw new MojoFailureException("The source or target Spring Boot line is absent from the selected knowledge package. Add verified knowledge rather than guessing compatibility.");
     ImpactReport report=new ImpactReport(source,target,project.getProperties().getProperty("java.version","not declared"));
     TargetBom targetBom=null;
-    try { targetBom=new TargetBomResolver(repositorySystem,repositorySystemSession,remoteRepositories).resolveSpringBoot(target); report.findings.add(new ImpactReport.Finding("TARGET_BOM","Spring Boot dependency BOM",target,"org.springframework.boot:spring-boot-dependencies:"+targetBom.resolvedVersion(),ImpactReport.Status.SUPPORTED,ImpactReport.Risk.LOW,ImpactReport.Confidence.HIGH,"Exact managed versions will be compared for direct dependencies.","The target BOM was resolved through Maven.",List.of(new ImpactReport.Evidence("BOM_METADATA","TARGET_BOM",targetBom.coordinates()+":"+targetBom.resolvedVersion(),"Resolved Maven metadata")))); }
+    try { targetBom=new TargetBomResolver(repositorySystem,repositorySystemSession,remoteRepositories).resolveSpringBoot(target); report.targetBomCoordinates=targetBom.coordinates(); report.targetBomVersion=targetBom.resolvedVersion(); }
     catch(Exception e) { getLog().warn("Target BOM metadata was unavailable: "+e.getMessage()); }
     java.util.Map<String,String> paths=java.util.Map.of();
     try { paths=new DependencyPathFinder(projectDependenciesResolver,repositorySystemSession).paths(project); }

@@ -12,6 +12,8 @@ mvn io.github.sandeep092001:migration-impact-maven-plugin:0.1.0:analyze \
 
 Reports are written to `target/migration-impact/` (`report.json` and `report.html`) and a concise report is printed to the console. The plugin uses Maven's resolved `MavenProject` artifacts, dependency-management model, plugins, profiles, and properties; it never writes to the analysed project.
 
+Console findings are grouped into required changes, recommended changes, manual reviews, and confirmed compatibility. The final impact summary counts affected source files and unique library actions. Ordinary transitive version changes managed automatically by the target Spring Boot BOM are counted once instead of being repeated as individual recommendations.
+
 The initial rule set supports Spring Boot 2.0–2.7, 3.0–3.5, and 4.0–4.1 version lines, including patch inputs such as `3.0.1` → `3.0.2`. It covers Java requirements, Spring Cloud, Springdoc 1.x, Jakarta imports, managed-version changes, and Maven build plugins. Findings always state their evidence and confidence; when a rule cannot establish compatibility it emits `UNKNOWN`, not a positive claim.
 
 ## Evidence policy
@@ -30,6 +32,8 @@ mvn migration:analyze -Dsource=spring-boot:3.0.1 -Dtarget=spring-boot:3.0.2 \
 ```bash
 mvn verify
 ```
+
+User-visible work planned for the next release is tracked in [`CHANGELOG.md`](CHANGELOG.md).
 
 ## Demo project
 
