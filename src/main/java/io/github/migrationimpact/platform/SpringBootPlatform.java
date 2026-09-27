@@ -8,10 +8,14 @@ import org.apache.maven.project.MavenProject;
 import java.nio.file.*;
 import java.io.IOException;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.*;
 import java.util.regex.Pattern;
 
 public final class SpringBootPlatform implements MigrationPlatform {
+  private static final long MAX_SOURCE_BYTES=2L*1024*1024;
+  private static final int MAX_SOURCE_DEPTH=64;
+  private static final long MAX_SOURCE_FILES=50_000;
   @FunctionalInterface public interface ReleaseLookup { String resolve(String coordinates,String range) throws Exception; }
   private final ReleaseLookup releases;
   private final Path knowledgeDirectory;
@@ -25,7 +29,7 @@ public final class SpringBootPlatform implements MigrationPlatform {
   @Override public void analyze(MavenProject p, Path base, ImpactReport r, TargetBom targetBom, Map<String,String> dependencyPaths) {
     TargetKnowledge knowledge=knowledge(r.target);
     r.knowledgeVersion=knowledge.version();
-    if(knowledgeDirectory!=null) r.knowledgeSource=knowledgeDirectory.toAbsolutePath().normalize().toString();
+    if(knowledgeDirectory!=null) r.knowledgeSource="external-directory";
     javaPrerequisite(p, r, knowledge); cloud(p, r, knowledge); dependencies(p, r, knowledge, targetBom, dependencyPaths); sourceImports(base, r); order(r);
   }
   private TargetKnowledge knowledge(String version) { return TargetKnowledge.load(knowledgeDirectory, version); }
@@ -129,9 +133,22 @@ public final class SpringBootPlatform implements MigrationPlatform {
   }
   private void sourceImports(Path base, ImpactReport r) {
     List<String> hits=new ArrayList<>();
+    AtomicLong candidates=new AtomicLong(),skipped=new AtomicLong();
     Pattern affectedImport=Pattern.compile("(?m)^\\s*import\\s+javax\\.(?:persistence|validation|servlet|annotation|transaction)(?:\\.|;)");
-    try (Stream<Path> paths=Files.walk(base.resolve("src"))) { paths.filter(x->x.toString().endsWith(".java")).forEach(x->{ try { if(affectedImport.matcher(Files.readString(x)).find()) hits.add(base.relativize(x).toString()); } catch(IOException ignored){} }); } catch(IOException ignored) {}
+    Path sourceRoot=base.resolve("src").normalize();
+    try (Stream<Path> paths=Files.walk(sourceRoot,MAX_SOURCE_DEPTH)) {
+      paths.filter(x->x.toString().endsWith(".java"))
+          .limit(MAX_SOURCE_FILES+1)
+          .forEach(x->{
+            if(candidates.incrementAndGet()>MAX_SOURCE_FILES || !Files.isRegularFile(x,LinkOption.NOFOLLOW_LINKS) || Files.isSymbolicLink(x)) { skipped.incrementAndGet(); return; }
+            try {
+              if(Files.size(x)>MAX_SOURCE_BYTES) { skipped.incrementAndGet(); return; }
+              if(affectedImport.matcher(Files.readString(x)).find()) hits.add(base.relativize(x).toString());
+            } catch(IOException ignored){ skipped.incrementAndGet(); }
+          });
+    } catch(IOException ignored) {}
     if(!hits.isEmpty()) { r.affectedSourceFiles.addAll(hits); add(r,"SOURCE_CODE","Jakarta namespace imports",hits.size()+" source file(s)","jakarta.* equivalents",Status.UPGRADE_REQUIRED,Risk.HIGH,Confidence.HIGH,"Replace only the listed affected Java EE imports; review each API's migration guidance.","Boot 3 uses Jakarta EE namespaces for these APIs. Files: "+String.join(", ",hits),docs("BOOT3_JAKARTA",BOOT_3_GUIDE,"Spring Boot 3 migration guide")); }
+    if(skipped.get()>0) add(r,"SOURCE_SCAN","Source scan coverage",skipped.get()+" Java file(s) skipped","manual review",Status.UNKNOWN,Risk.MEDIUM,Confidence.HIGH,"Review skipped symbolic-link, oversized, unreadable, or over-limit Java files manually.","Source scanning applies safety bounds and does not follow symbolic links.",new Evidence("ANALYZER_SAFETY","BOUNDED_SOURCE_SCAN","internal","Source scanning safety boundary"));
   }
   private void order(ImpactReport r) { r.migrationOrder.addAll(r.findings.stream().filter(f->f.category().equals("PREREQUISITE")||f.status()==Status.UPGRADE_REQUIRED).map(f->"REQUIRED_BEFORE_MIGRATION: "+f.recommendation()).distinct().toList()); r.migrationOrder.add("REVIEW_DURING_MIGRATION: Upgrade Spring Boot and validate dependency convergence."); r.migrationOrder.add("POST_MIGRATION_VALIDATION: Run the complete test suite and review runtime configuration."); }
   private static Stream<Artifact> artifacts(MavenProject p) { return p.getArtifacts()==null?Stream.empty():p.getArtifacts().stream(); }

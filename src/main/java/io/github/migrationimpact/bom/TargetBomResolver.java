@@ -13,6 +13,7 @@ public final class TargetBomResolver {
   private final RepositorySystem repositories; private final RepositorySystemSession session; private final List<RemoteRepository> remotes;
   public TargetBomResolver(RepositorySystem repositories, RepositorySystemSession session, List<RemoteRepository> remotes) { this.repositories=repositories; this.session=session; this.remotes=remotes; }
   public TargetBom resolveSpringBoot(String target) throws Exception {
+    if(target==null || !target.matches("spring-boot:\\d+\\.\\d+(?:\\.\\d+)?")) throw new IllegalArgumentException("Expected spring-boot:<major>.<minor>[.<patch>]");
     String requested=target.substring("spring-boot:".length()); String version=exactVersion(requested);
     var bom=new DefaultArtifact("org.springframework.boot", "spring-boot-dependencies", "", "pom", version);
     var request=new ArtifactDescriptorRequest().setArtifact(bom).setRepositories(remotes);

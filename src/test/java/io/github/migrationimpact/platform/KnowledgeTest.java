@@ -8,6 +8,12 @@ class KnowledgeTest {
     assertEquals("3.0",TargetKnowledge.forTarget("spring-boot:3.0.2").line());
     assertEquals("4.1",TargetKnowledge.forTarget("spring-boot:4.1.1").line());
   }
+  @Test void rejectsVersionsWithResolverControlCharactersOrExtraSyntax() {
+    assertNull(TargetKnowledge.forTarget("spring-boot:4.0/../../private"));
+    assertNull(TargetKnowledge.forTarget("spring-boot:4.0-SNAPSHOT"));
+    assertNull(TargetKnowledge.forTarget("spring-boot:4.0.1?query"));
+    assertNull(TargetKnowledge.forTarget("other:4.0"));
+  }
   @Test void bundledLibraryRulesContainVerifiedEcosystemMappings() {
     var rules=LibraryKnowledge.load(null);
     assertTrue(rules.stream().anyMatch(r->r.id().equals("springdoc-boot4")));

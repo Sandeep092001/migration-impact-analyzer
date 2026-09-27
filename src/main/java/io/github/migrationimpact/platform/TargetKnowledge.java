@@ -12,10 +12,11 @@ final class TargetKnowledge {
   private TargetKnowledge(String line, Properties facts) { this.line=line; this.facts=facts; }
   static TargetKnowledge forTarget(String target) { return load(null, target); }
   static TargetKnowledge load(Path knowledgeDirectory, String target) {
-    String[] parts=target.split(":",2); if(parts.length!=2 || !parts[0].equals("spring-boot")) return null;
+    String[] parts=target.split(":",2);
+    if(parts.length!=2 || !parts[0].equals("spring-boot") || !parts[1].matches("\\d+\\.\\d+(?:\\.\\d+)?")) return null;
     Properties facts=new Properties();
     try (InputStream input=knowledgeDirectory == null ? TargetKnowledge.class.getResourceAsStream("/knowledge/spring-boot-targets.properties") : Files.newInputStream(knowledgeDirectory.resolve("spring-boot-targets.properties"))) { if(input==null)return null; facts.load(input); } catch(IOException e) { return null; }
-    String version=parts[1]; String line=version.matches("\\d+\\.\\d+.*") ? version.replaceFirst("^(\\d+\\.\\d+).*","$1") : version;
+    String version=parts[1]; String line=version.replaceFirst("^(\\d+\\.\\d+).*","$1");
     return facts.containsKey(line+".java.minimum") ? new TargetKnowledge(line,facts) : null;
   }
   String line(){return line;} String javaMinimum(){return get("java.minimum");} String framework(){return get("spring.framework");}

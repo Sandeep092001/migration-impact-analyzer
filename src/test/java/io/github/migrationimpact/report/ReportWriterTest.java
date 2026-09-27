@@ -32,6 +32,8 @@ class ReportWriterTest {
     var dir=Files.createTempDirectory("impact-report"); ReportWriter.write(report,dir,"all");
     assertTrue(Files.exists(dir.resolve("report.json")));
     String html=Files.readString(dir.resolve("report.html"));
+    assertTrue(html.contains("Content-Security-Policy"));
+    assertTrue(html.contains("name=\"referrer\" content=\"no-referrer\""));
     assertTrue(html.contains("Migration Impact"));
     assertTrue(html.contains("&quot;unsafe&quot;"));
   }

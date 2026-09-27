@@ -2,6 +2,18 @@
 
 This file records user-visible changes while a release is being developed. Items under **Unreleased** will become the release notes when that version is finalized.
 
+## 0.1.2-SNAPSHOT — Unreleased
+
+### Security hardening
+
+- Strictly validate Spring Boot source and target syntax before passing versions to Maven Resolver.
+- Avoid logging raw resolver exception messages and omit absolute external-knowledge paths from reports.
+- Ignore symbolic links and oversized Java files during bounded source scanning.
+- Bound dependency-graph traversal depth and stop identity cycles.
+- Add a restrictive content security policy and referrer policy to generated HTML reports.
+- Give CI read-only repository permissions, disable persisted checkout credentials, and pin official actions to immutable commits.
+- Update the Central publishing plugin to 0.11.0, which avoids logging sensitive authentication identifiers.
+
 ## 0.1.1 — 2026-09-27
 
 Published to Maven Central. Third-party knowledge is curated and incomplete; uncovered libraries remain explicit manual-review items and will be addressed in later knowledge updates.

@@ -60,6 +60,12 @@ User-visible work planned for the next release is tracked in [`CHANGELOG.md`](CH
 
 Contributions that add knowledge must include authoritative evidence, a narrow artifact/version matcher, and automated coverage. See [KNOWLEDGE.md](KNOWLEDGE.md) before proposing compatibility rules.
 
+## Security
+
+The plugin does not execute application source or shell commands, collect telemetry, or intentionally read Maven credentials. It does read dependency metadata through repositories already configured in Maven and writes reports to the configured output directory. Reports may contain dependency coordinates, versions, relative source paths, and migration findings; review them before sharing.
+
+Use the newest plugin version with a maintained JDK and supported Maven release. Compatibility analysis is not a vulnerability scan. See [SECURITY.md](SECURITY.md) for trust boundaries and private vulnerability reporting instructions.
+
 ## Demo project
 
 [`examples/spring-boot-2x-demo`](examples/spring-boot-2x-demo) is an intentionally legacy-shaped Spring Boot 2.7 fixture for manual end-to-end testing. It exercises the current Java, Spring Cloud, Springdoc, Hibernate, compiler-plugin, and Jakarta-import rules.

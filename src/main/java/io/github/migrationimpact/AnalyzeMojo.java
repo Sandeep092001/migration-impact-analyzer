@@ -41,10 +41,10 @@ public final class AnalyzeMojo extends AbstractMojo {
     ImpactReport report=new ImpactReport(source,target,project.getProperties().getProperty("java.version","not declared"));
     TargetBom targetBom=null;
     try { targetBom=new TargetBomResolver(repositorySystem,repositorySystemSession,remoteRepositories).resolveSpringBoot(target); report.targetBomCoordinates=targetBom.coordinates(); report.targetBomVersion=targetBom.resolvedVersion(); }
-    catch(Exception e) { getLog().warn("Target BOM metadata was unavailable: "+e.getMessage()); }
+    catch(Exception e) { getLog().warn("Target BOM metadata was unavailable; no repository details were logged."); }
     java.util.Map<String,String> paths=java.util.Map.of();
     try { paths=new DependencyPathFinder(projectDependenciesResolver,repositorySystemSession).paths(project); }
-    catch(Exception e) { getLog().warn("Dependency paths were unavailable: "+e.getMessage()); }
+    catch(Exception e) { getLog().warn("Dependency paths were unavailable; no resolver details were logged."); }
     platform.analyze(project,project.getBasedir().toPath(),report,targetBom,paths);
     if(reportFormat.equals("console")||reportFormat.equals("all")) getLog().info(ReportWriter.console(report));
     try { if(!reportFormat.equals("console")) ReportWriter.write(report,Path.of(outputDirectory),reportFormat); } catch(Exception e) { throw new MojoExecutionException("Could not write migration report",e); }
