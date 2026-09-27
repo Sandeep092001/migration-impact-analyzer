@@ -24,6 +24,11 @@ This file records user-visible changes while a release is being developed. Items
 
 ### Knowledge coverage
 
+- Resolve exact stable releases using Maven metadata within explicit, reviewed `releaseRange` bounds. Cache lookups per analysis and exclude prereleases; expose unavailable metadata and newer unreviewed current versions without suggesting a downgrade.
+- Add Commons Lang, Text, CSV, IO, Codec, Compress, jsoup and MapStruct rules, with Java baselines and official sources. Target Boot BOM management takes precedence over general Java-library release suggestions.
+- Add exact-release resolution to JJWT, PDFBox, MyBatis, and Spring Cloud AWS rules. Exact version selection is not an application compatibility or vulnerability certification.
+- Include a `dependencyTargets` inventory in JSON for every resolved direct dependency, with current version, target and knowledge/BOM basis. Unknown targets remain explicit.
+
 - Extend the rule schema with display names, explicit targets, Java baselines, risk, confidence, custom recommendations, family version alignment, and runtime-scope requirements.
 - Add evidence-backed compatibility knowledge for the Resend Java SDK, JJWT module family, and Apache PDFBox.
 - Collapse the JJWT API, implementation, and JSON adapter artifacts into one family-level finding.

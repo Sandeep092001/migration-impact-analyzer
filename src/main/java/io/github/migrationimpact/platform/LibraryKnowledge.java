@@ -13,7 +13,7 @@ final class LibraryKnowledge {
               String displayName, String targetDisplay, Status status, Risk risk,
               Confidence confidence, int javaMinimum, String recommendation,
               String reason, List<String> evidence, boolean alignVersions,
-              List<String> runtimeArtifacts) {
+              List<String> runtimeArtifacts, String releaseArtifact, String releaseRange) {
     boolean matches(String g, String artifact, String version, String targetLine) {
       if (!group.equals(g) || !targets.contains(targetLine)) return false;
       boolean artifactMatch=artifacts.stream().anyMatch(x -> x.endsWith("*") ? artifact.startsWith(x.substring(0,x.length()-1)) : artifact.equals(x));
@@ -29,7 +29,7 @@ final class LibraryKnowledge {
     List<Rule> result=new ArrayList<>();
     for(String id:csv(p.getProperty("rules",""))) {
       String k="rule."+id+".";
-      result.add(new Rule(id,p.getProperty(k+"group"),csv(p.getProperty(k+"artifact")),csv(p.getProperty(k+"current")),Set.copyOf(csv(p.getProperty(k+"targets"))),p.getProperty(k+"targetArtifact"),p.getProperty(k+"targetVersion"),p.getProperty(k+"name"),p.getProperty(k+"target"),Status.valueOf(p.getProperty(k+"status")),Risk.valueOf(p.getProperty(k+"risk","HIGH")),Confidence.valueOf(p.getProperty(k+"confidence","HIGH")),Integer.parseInt(p.getProperty(k+"java.minimum","0")),p.getProperty(k+"recommendation"),p.getProperty(k+"reason"),separated(p.getProperty(k+"evidence",""),"\\|"),Boolean.parseBoolean(p.getProperty(k+"alignVersions","false")),csv(p.getProperty(k+"runtimeArtifacts",""))));
+      result.add(new Rule(id,p.getProperty(k+"group"),csv(p.getProperty(k+"artifact")),csv(p.getProperty(k+"current")),Set.copyOf(csv(p.getProperty(k+"targets"))),p.getProperty(k+"targetArtifact"),p.getProperty(k+"targetVersion"),p.getProperty(k+"name"),p.getProperty(k+"target"),Status.valueOf(p.getProperty(k+"status")),Risk.valueOf(p.getProperty(k+"risk","HIGH")),Confidence.valueOf(p.getProperty(k+"confidence","HIGH")),Integer.parseInt(p.getProperty(k+"java.minimum","0")),p.getProperty(k+"recommendation"),p.getProperty(k+"reason"),separated(p.getProperty(k+"evidence",""),"\\|"),Boolean.parseBoolean(p.getProperty(k+"alignVersions","false")),csv(p.getProperty(k+"runtimeArtifacts","")),p.getProperty(k+"releaseArtifact"),p.getProperty(k+"releaseRange")));
     }
     return List.copyOf(result);
   }

@@ -36,7 +36,8 @@ public final class AnalyzeMojo extends AbstractMojo {
   @Parameter(defaultValue="${project.remoteProjectRepositories}", readonly=true) private List<RemoteRepository> remoteRepositories;
   public void execute() throws MojoExecutionException, MojoFailureException {
     if(!reportFormat.matches("console|json|html|all")) throw new MojoFailureException("reportFormat must be console, json, html, or all");
-    MigrationPlatform platform=new SpringBootPlatform(knowledgeDirectory == null || knowledgeDirectory.isBlank() ? null : Path.of(knowledgeDirectory)); if(!platform.supports(source,target)) throw new MojoFailureException("The source or target Spring Boot line is absent from the selected knowledge package. Add verified knowledge rather than guessing compatibility.");
+    var releases=new LibraryVersionResolver(repositorySystem,repositorySystemSession,remoteRepositories);
+    MigrationPlatform platform=new SpringBootPlatform(knowledgeDirectory == null || knowledgeDirectory.isBlank() ? null : Path.of(knowledgeDirectory),releases::resolve); if(!platform.supports(source,target)) throw new MojoFailureException("The source or target Spring Boot line is absent from the selected knowledge package. Add verified knowledge rather than guessing compatibility.");
     ImpactReport report=new ImpactReport(source,target,project.getProperties().getProperty("java.version","not declared"));
     TargetBom targetBom=null;
     try { targetBom=new TargetBomResolver(repositorySystem,repositorySystemSession,remoteRepositories).resolveSpringBoot(target); report.targetBomCoordinates=targetBom.coordinates(); report.targetBomVersion=targetBom.resolvedVersion(); }

@@ -5,6 +5,8 @@ import java.util.*;
 public final class ImpactReport {
   public final String source, target, javaVersion;
   public final List<Finding> findings = new ArrayList<>();
+  public final List<DependencyTarget> dependencyTargets = new ArrayList<>();
+  public record DependencyTarget(String artifact,String current,String target,String basis) {}
   public final List<String> migrationOrder = new ArrayList<>();
   public final Set<String> affectedSourceFiles = new TreeSet<>();
   public String knowledgeVersion = "unknown";

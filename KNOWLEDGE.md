@@ -19,6 +19,14 @@ Coverage must be measured by a reproducible fixture/corpus report before a perce
 
 ## Adding knowledge
 
+### Exact release selection
+
+Optional `releaseArtifact=group:artifact` and `releaseRange=[minimum,exclusive-upper)` fields select an exact stable release through Maven Resolver using the user's configured repositories and offline policy. Ranges are reviewed compatibility boundaries, not unrestricted latest-version queries. Qualifiers other than Final/RELEASE/GA are excluded. Missing metadata stays unresolved, and a newer installed version never receives an automatic downgrade recommendation.
+
+Knowledge package 2026.09.27.2 adds reviewed release lines for Commons Lang 3.20, Text 1.15, CSV 1.14, IO 2.22, Codec 1.22, Compress 1.28, jsoup 1.23 and MapStruct 1.6. Evidence links are recorded per rule. These Java-library rules apply to Boot 3.x/4.x; they describe a Java baseline and a release candidate, not tested application integration. Security advisories, custom serialization, transitive convergence and application API usage still require separate checks.
+
+The `dependencyTargets` JSON array inventories resolved direct artifacts even when console findings are grouped. `TARGET_BOM` means the exact version selected by the target platform; `RULE:<id>` links to a reviewed family rule; `UNKNOWN` exposes missing knowledge. Family targets identify a representative artifact or a BOM and do not instruct replacing every module with that representative artifact. The catalog does not claim universal or measured 80–90% coverage yet.
+
 Update `src/main/resources/knowledge/library-rules.properties` without changing the engine. Every rule must include official evidence, a precise artifact matcher, current version prefixes, target Boot lines, status, risk, confidence, and an actionable recommendation. Family rules may additionally define a display name, Java minimum, version-alignment requirement, runtime-only modules, and a target description. Add an automated assertion and a fixture before release.
 
 Do not add a compatibility claim based only on a blog, forum answer, search snippet, or an LLM response. When maintainers publish no compatibility contract, leave the result `UNKNOWN`.

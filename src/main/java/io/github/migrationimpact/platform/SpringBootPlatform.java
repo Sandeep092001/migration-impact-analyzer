@@ -12,9 +12,12 @@ import java.util.stream.*;
 import java.util.regex.Pattern;
 
 public final class SpringBootPlatform implements MigrationPlatform {
+  @FunctionalInterface public interface ReleaseLookup { String resolve(String coordinates,String range) throws Exception; }
+  private final ReleaseLookup releases;
   private final Path knowledgeDirectory;
   public SpringBootPlatform() { this(null); }
-  public SpringBootPlatform(Path knowledgeDirectory) { this.knowledgeDirectory=knowledgeDirectory; }
+  public SpringBootPlatform(Path knowledgeDirectory) { this(knowledgeDirectory,null); }
+  public SpringBootPlatform(Path knowledgeDirectory,ReleaseLookup releases) { this.knowledgeDirectory=knowledgeDirectory; this.releases=releases; }
   private static final String BOOT_3_GUIDE = "https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-3.0-Migration-Guide";
   private static final String CLOUD_MATRIX = "https://github.com/spring-cloud/spring-cloud-release/wiki/Supported-Versions";
   private static Evidence docs(String id, String url, String text) { return new Evidence("OFFICIAL_DOCUMENTATION", id, url, text); }
@@ -50,7 +53,8 @@ public final class SpringBootPlatform implements MigrationPlatform {
     List<Artifact> resolved=artifacts(p).sorted(Comparator.comparing(a -> a.getGroupId()+":"+a.getArtifactId())).toList();
     Set<String> ruleMatched=new HashSet<>();
     for(LibraryKnowledge.Rule rule:libraryRules) {
-      List<Artifact> matches=resolved.stream().filter(a -> direct.contains(a.getGroupId()+":"+a.getArtifactId()) && rule.matches(a.getGroupId(),a.getArtifactId(),a.getVersion(),knowledge.line())).toList();
+      List<Artifact> matches=resolved.stream().filter(a -> direct.contains(a.getGroupId()+":"+a.getArtifactId()) && rule.matches(a.getGroupId(),a.getArtifactId(),a.getVersion(),knowledge.line()))
+          .filter(a -> rule.status()!=Status.COMPATIBLE || targetBom==null || targetBom.managedVersion(a.getGroupId(),a.getArtifactId())==null).toList();
       if(matches.isEmpty()) continue;
       matches.forEach(a -> ruleMatched.add(a.getGroupId()+":"+a.getArtifactId()));
       String subject=rule.displayName()==null?matches.get(0).getGroupId()+":"+matches.get(0).getArtifactId():rule.displayName();
@@ -65,12 +69,48 @@ public final class SpringBootPlatform implements MigrationPlatform {
       if(!wrongScopes.isEmpty()) recommendation="Use runtime scope for "+String.join(", ",wrongScopes)+". "+recommendation;
       String javaEvidence=rule.javaMinimum()>0?" The library baseline is Java "+rule.javaMinimum()+"+; Spring Boot "+knowledge.line()+" requires Java "+knowledge.javaMinimum()+"+.":"";
       List<Evidence> evidence=new ArrayList<>(); for(int i=0;i<rule.evidence().size();i++) evidence.add(docs(rule.id()+(i==0?"":"_"+(i+1)),rule.evidence().get(i),"Official library compatibility documentation"));
+      String selectedVersion=null;
+      if(rule.releaseRange()!=null) {
+        try {
+          if(releases==null) throw new IllegalStateException("Release lookup unavailable");
+          String exact=releases.resolve(rule.releaseArtifact(),rule.releaseRange());
+          if(rule.alignVersions()) for(Artifact matched:matches) {
+            if(rule.releaseArtifact().equals(matched.getGroupId()+":"+matched.getArtifactId())) continue;
+            if(!exact.equals(releases.resolve(matched.getGroupId()+":"+matched.getArtifactId(),"["+exact+"]"))) throw new IllegalStateException("Family release unavailable");
+          }
+          selectedVersion=exact;
+          targetDisplay=rule.releaseArtifact()+":"+exact;
+          evidence.add(new Evidence("MAVEN_METADATA",rule.id()+"_RELEASE",targetDisplay,"Latest stable release inside reviewed range "+rule.releaseRange()));
+          if(matches.stream().anyMatch(a -> new org.apache.maven.artifact.versioning.ComparableVersion(a.getVersion()).compareTo(new org.apache.maven.artifact.versioning.ComparableVersion(exact))>0)) {
+            selectedVersion=null;
+            targetDisplay="Keep current version pending review; reviewed candidate "+targetDisplay;
+            status=Status.UNKNOWN;
+          }
+          if(status==Status.COMPATIBLE && matches.stream().anyMatch(a -> new org.apache.maven.artifact.versioning.ComparableVersion(a.getVersion()).compareTo(new org.apache.maven.artifact.versioning.ComparableVersion(exact))<0)) status=Status.UPGRADE_RECOMMENDED;
+          recommendation="Reviewed release candidate: "+targetDisplay+". "+recommendation;
+        } catch(Exception unavailable) {
+          selectedVersion=null;
+          targetDisplay="Exact release unresolved; reviewed range "+rule.releaseRange();
+          if(status==Status.COMPATIBLE) status=Status.UNKNOWN;
+          recommendation="Release metadata was unavailable or contained no stable version in the reviewed range. Retry with repository access. "+recommendation;
+        }
+      }
+      if(rule.javaMinimum()>Integer.parseInt(knowledge.javaMinimum())) {
+        status=Status.UNKNOWN;
+        recommendation="This library needs Java "+rule.javaMinimum()+"+, above the target Boot minimum; explicitly validate the target JDK. "+recommendation;
+      }
+      for(Artifact matched:matches) {
+        String artifact=matched.getGroupId()+":"+matched.getArtifactId();
+        String mappedTarget=selectedVersion==null?targetDisplay:(rule.alignVersions()?artifact:rule.releaseArtifact())+":"+selectedVersion;
+        r.dependencyTargets.add(new ImpactReport.DependencyTarget(artifact,matched.getVersion(),mappedTarget,"RULE:"+rule.id()));
+      }
       add(r,"LIBRARY_COMPATIBILITY",subject,current,targetDisplay,status,rule.risk(),rule.confidence(),recommendation,rule.reason()+javaEvidence,evidence);
     }
     Set<String> oldSpringArtifacts=new TreeSet<>(), hibernateArtifacts=new TreeSet<>(), hibernateVersions=new TreeSet<>();
     for (Artifact a:resolved) {
       String ga=a.getGroupId()+":"+a.getArtifactId(); boolean isDirect=direct.contains(ga);
       String targetManaged=targetBom == null ? null : targetBom.managedVersion(a.getGroupId(),a.getArtifactId());
+      if(isDirect && !ruleMatched.contains(ga)) r.dependencyTargets.add(new ImpactReport.DependencyTarget(ga,a.getVersion(),targetManaged,targetManaged==null?"UNKNOWN":"TARGET_BOM"));
       if (targetManaged != null && !targetManaged.equals(a.getVersion())) {
         if(isDirect) r.managedDirectChanges++; else r.managedTransitiveChanges++;
       }

@@ -35,6 +35,7 @@ public final class ReportWriter {
       for(int i=0;i<report.migrationOrder.size();i++) out.append(i+1).append(". ").append(report.migrationOrder.get(i)).append('\n');
     }
     appendSummary(out,report.summary());
+    out.append("Direct dependency mappings             : ").append(report.dependencyTargets.size()).append(" (see report.json)\n");
     return out.toString();
   }
 
@@ -77,6 +78,7 @@ public final class ReportWriter {
         "  \"source\":\""+j(report.source)+"\",\n"+
         "  \"target\":\""+j(report.target)+"\",\n"+
         "  \"overallRisk\":\""+report.risk()+"\",\n"+
+        "  \"dependencyTargets\":["+report.dependencyTargets.stream().map(d -> "{\"artifact\":\""+j(d.artifact())+"\",\"current\":\""+j(d.current())+"\",\"target\":"+nullableJson(d.target())+",\"basis\":\""+j(d.basis())+"\"}").collect(Collectors.joining(","))+"],\n"+
         "  \"metadata\":{\"knowledgeVersion\":\""+j(report.knowledgeVersion)+"\",\"knowledgeSource\":\""+j(report.knowledgeSource)+"\",\"targetBom\":"+nullableJson(joinBom(report))+"},\n"+
         "  \"summary\":{\"affectedSourceFiles\":"+summary.affectedSourceFiles()+",\"requiredLibraryUpdates\":"+summary.requiredLibraryUpdates()+",\"recommendedLibraryUpdates\":"+summary.recommendedLibraryUpdates()+",\"librariesToReview\":"+summary.librariesToReview()+",\"managedDirectChanges\":"+summary.managedDirectChanges()+",\"managedTransitiveChanges\":"+summary.managedTransitiveChanges()+",\"totalFindings\":"+summary.totalFindings()+"},\n"+
         "  \"affectedFiles\":["+report.affectedSourceFiles.stream().map(x -> "\""+j(x)+"\"").collect(Collectors.joining(","))+"],\n"+
