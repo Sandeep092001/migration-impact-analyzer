@@ -6,11 +6,27 @@ A read-only Maven plugin that maps a Spring Boot migration's likely blast radius
 mvn install
 
 # In the Maven project you want to inspect:
-mvn io.github.sandeep092001:migration-impact-maven-plugin:0.1.0:analyze \
+mvn io.github.sandeep092001:migration-impact-maven-plugin:0.1.1:analyze \
   -Dsource=spring-boot:2.7 -Dtarget=spring-boot:3.5 -DreportFormat=all
 ```
 
-Reports are written to `target/migration-impact/` (`report.json` and `report.html`) and a concise report is printed to the console. The plugin uses Maven's resolved `MavenProject` artifacts, dependency-management model, plugins, profiles, and properties; it never writes to the analysed project.
+Requires Java 17+ and Maven 3.9+. Install 0.1.1 locally until it is published to Central.
+
+For the shorter command, declare this under your application's `build/plugins`, not `dependencies`:
+
+```xml
+<plugin>
+  <groupId>io.github.sandeep092001</groupId>
+  <artifactId>migration-impact-maven-plugin</artifactId>
+  <version>0.1.1</version>
+</plugin>
+```
+
+Then run `mvn migration:analyze -Dsource=spring-boot:2.7 -Dtarget=spring-boot:3.5 -DreportFormat=all`.
+
+Reports are written to `target/migration-impact/` (`report.json` and `report.html`). The plugin does not modify application source or POM files.
+
+Third-party coverage is curated, not universal. Exact stable releases are selected within reviewed ranges when metadata is available. Recommendations do not guarantee application compatibility or freedom from vulnerabilities: test the migrated application. See [coverage and limitations](KNOWLEDGE.md).
 
 Console findings are grouped into required changes, recommended changes, manual reviews, and confirmed compatibility. The final impact summary counts affected source files and unique library actions. Ordinary transitive version changes managed automatically by the target Spring Boot BOM are counted once instead of being repeated as individual recommendations.
 

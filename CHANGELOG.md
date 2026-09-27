@@ -2,7 +2,7 @@
 
 This file records user-visible changes while a release is being developed. Items under **Unreleased** will become the release notes when that version is finalized.
 
-## 0.1.1-SNAPSHOT — Unreleased
+## 0.1.1 — Prepared for release (not yet published)
 
 ### Reporting
 
