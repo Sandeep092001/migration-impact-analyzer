@@ -2,7 +2,7 @@
 
 This intentionally uses Spring Boot 2.7, Java 11, Spring Cloud 2021.0.x, Springdoc 1.x, JPA/Hibernate, and `javax.*` imports. It is a fixture for validating the analyzer; it is not a production application.
 
-From the analyzer project root, first install the snapshot:
+From the analyzer project root, first install the release candidate locally:
 
 ```bash
 mvn install
@@ -11,7 +11,7 @@ mvn install
 Then run this from this directory:
 
 ```bash
-mvn io.github.sandeep092001:migration-impact-maven-plugin:0.1.0:analyze \
+mvn io.github.sandeep092001:migration-impact-maven-plugin:0.1.1:analyze \
   -Dsource=spring-boot:2.7 -Dtarget=spring-boot:3.5 -DreportFormat=all
 ```
 
